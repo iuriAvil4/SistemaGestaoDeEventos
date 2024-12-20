@@ -10,7 +10,6 @@ class UserProfileType(models.TextChoices):
     PARTICIPANT = 'PARTICIPANT', 'Participant'
 
 
-
 class CustomUserManager(UserManager):
     def _create_user(self, email, password, **extra_fields):
         if not email:
@@ -54,10 +53,14 @@ class User(AbstractBaseUser, PermissionsMixin):
     commercial_address = models.TextField(blank=True, null=True)
 
 
-
     is_superuser = models.BooleanField(default=False)
     is_staff = models.BooleanField(default=False)
+    
 
+    objects = CustomUserManager()
+
+    USERNAME_FIELD = 'email'
+    REQUIRED_FIELDS = []
 
     # Adicionando related_name para evitar conflitos
     groups = models.ManyToManyField(
@@ -70,11 +73,6 @@ class User(AbstractBaseUser, PermissionsMixin):
         related_name='custom_user_permissions',
         blank=True
     )
-
-    objects = CustomUserManager()
-
-    USERNAME_FIELD = 'email'
-    REQUIRED_FIELDS = []
 
     class Meta:
         verbose_name = 'User'
