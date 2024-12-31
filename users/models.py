@@ -62,7 +62,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = []
 
-    # Adicionando related_name para evitar conflitos
+    # related_name para evitar conflitos
     groups = models.ManyToManyField(
         'auth.Group',
         related_name='custom_user_groups',
@@ -86,7 +86,18 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     
     def clean(self):
+
+        if self.profile_type == UserProfileType.PARTICIPANT:
+            if self.is_staff or self.is_superuser:
+                raise ValidationError("Participantes não podem ser staff ou superuser.")
+            
+        if self.profile_type == UserProfileType.ADMIN:
+            if not self.is_staff or not self.is_superuser:
+                raise ValidationError("Administradores devem ser staff e superuser.")
+                
         if self.profile_type == UserProfileType.ORGANIZER:
+            if self.is_staff or self.is_superuser:
+                raise ValidationError("Organizadores não podem ser staff ou superuser.")
             if not self.cnpj_cpf:
                 raise ValidationError("CNPJ/CPF é obrigatório para organizadores.")
             if not self.business_name:

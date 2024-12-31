@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     'users',
     'rest_framework',
     'rest_framework_simplejwt',
+    'corsheaders',
 ]
 
 MIDDLEWARE = [
@@ -51,6 +52,15 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'users.authentication.CookiesJWTAuthentication',
+    ),
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.IsAuthenticated',
+    ]
+}
 
 ROOT_URLCONF = 'base.urls'
 
