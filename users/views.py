@@ -12,10 +12,9 @@ from rest_framework_simplejwt.views import (
     TokenObtainPairView,
     TokenRefreshView,
 )
-
+#CLASSES JWT
 class CustomTokenObtainPairView(TokenObtainPairView):
     def post(self, request, *args, **kwargs):
-
         try:
             response = super().post(request, *args, **kwargs)
             tokens = response.data
@@ -51,7 +50,6 @@ class CustomTokenObtainPairView(TokenObtainPairView):
         except Exception as e:
             print(e)
             return Response({'success':False})
-
 
 class CustomRefreshTokenView(TokenRefreshView):
 
@@ -97,7 +95,6 @@ def register_user(request):
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-
 @api_view(['POST'])
 def logout(request):
     try:
@@ -117,7 +114,7 @@ def is_authenticated(request):
 
 
 @api_view(['GET'])
-@permission_classes([AllowAny])
+@permission_classes([IsAuthenticated, IsAdminUser])
 def get_users(request):
     users = User.objects.filter(is_active=True)
     serializer = UserSerializer(users, many=True)
