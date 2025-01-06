@@ -3,10 +3,10 @@ from users.models import User
 from django.utils import timezone
 
 class EventStatus(models.TextChoices):
-    SKETCH = 'SKETCH'
-    PUBLISHED = 'PUBLISHED'
-    CANCELED = 'CANCELED'
-    FINISHED = 'FINISHED'
+    SKETCH = 'SKETCH', 'Sketch'
+    PUBLISHED = 'PUBLISHED', 'Published'
+    CANCELED = 'CANCELED', 'Canceled'
+    FINISHED = 'FINISHED', 'Finished'
 
 class Status(models.TextChoices):
     ACTIVE = 'ACTIVE'

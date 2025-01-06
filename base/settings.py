@@ -39,6 +39,8 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'users',
+    'events',
+    'tickets',
     'rest_framework',
     'rest_framework_simplejwt',
     'corsheaders',
@@ -72,8 +74,8 @@ SIMPLE_JWT = {
     "UPDATE_LAST_LOGIN": False,
 
     'AUTH_COOKIE': 'access_token',  
-    'AUTH_COOKIE_REFRESH': 'refresh_token',  
-    'AUTH_COOKIE_SECURE': False,  # Set to True if using HTTPS
+    'AUTH_COOKIE_REFRESH': 'refresh_token', 
+    'AUTH_COOKIE_SECURE': False,  # needs to set to True if using HTTPS
     'AUTH_COOKIE_HTTP_ONLY': True,  
     'AUTH_COOKIE_PATH': '/',  
     'AUTH_COOKIE_SAMESITE': 'Lax',  
