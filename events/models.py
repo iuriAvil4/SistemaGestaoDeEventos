@@ -1,4 +1,5 @@
 from django.db import models
+from django.forms import ValidationError
 from users.models import User
 from django.utils import timezone
 
@@ -32,6 +33,12 @@ class Event(models.Model):
             self.created_at = timezone.now()
         self.last_modified = timezone.now()
         return super(User, self).save(*args, **kwargs)
+    
+    def clean(self):
+        if self.start_date > self.end_date:
+            raise ValidationError('The start date must be before the end date')       
+        if self.total_capacity < 1:
+            raise ValidationError('The total capacity must be greater than zero')
 
 class Category(models.Model):
     name = models.CharField(max_length=255, null=False, blank=False)

@@ -7,7 +7,6 @@ import uuid
 import qrcode
 
 
-
 def generate_unique_code():
     return f'TIX-{uuid.uuid4().hex[:8].upper()}'
 
