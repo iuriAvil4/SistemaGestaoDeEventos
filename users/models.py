@@ -88,16 +88,18 @@ class User(AbstractBaseUser, PermissionsMixin):
     def clean(self):
         if self.profile_type == UserProfileType.PARTICIPANT:
             if self.is_staff or self.is_superuser:
-                raise ValidationError("Participantes não podem ser staff ou superuser.")
+                raise ValidationError("Participants can't be a staff or superuser.")
             
         if self.profile_type == UserProfileType.ADMIN:
             if not self.is_staff or not self.is_superuser:
-                raise ValidationError("Administradores devem ser staff e superuser.")
+                raise ValidationError("Administrators must be staff and superuser.")
                 
         if self.profile_type == UserProfileType.ORGANIZER:
             if self.is_staff or self.is_superuser:
-                raise ValidationError("Organizadores não podem ser staff ou superuser.")
+                raise ValidationError("Organizers can't be a staff or superuser.")
             if not self.cnpj_cpf:
-                raise ValidationError("CNPJ/CPF é obrigatório para organizadores.")
+                raise ValidationError("CNPJ/CPF is mandatory for organizers.")
             if not self.business_name:
-                raise ValidationError("Razão social é obrigatória para organizadores.")
+                raise ValidationError("Business name is mandatory for organizers.")
+            if not self.commercial_address:
+                raise ValidationError("Commercial address is mandatory for organizers.")
