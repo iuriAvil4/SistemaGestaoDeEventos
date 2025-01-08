@@ -24,22 +24,22 @@ class Status(models.TextChoices):
 
 class TicketType(models.Model):
     event = models.ForeignKey(Event, related_name='ticket_types', on_delete=models.CASCADE, null=False, blank=False)
-    name = models.ChairField(max_lenght=20, choices=TicketTypeName.choices, default=TicketTypeName.REGULAR, null=False, blank=False)
+    name = models.CharField(choices=TicketTypeName.choices, default=TicketTypeName.REGULAR, null=False, blank=False)
     description =models.TextField(null=False, blank=False)
-    price = models.DecimalField(max_digits=10, decimal_places=2, localize=True, null=False, blank=False)
+    price = models.DecimalField(max_digits=10, decimal_places=2, null=False, blank=False)
     quantity_avaiable = models.IntegerField(null=False, blank=False)
     sale_start = models.DateTimeField(null=False, blank=False)
     sale_end = models.DateTimeField(null=False, blank=False)
-    status = models.CharField(max_lenght=20, choices=Status.choices, default=Status.ACTIVE, null=False, blank=False)
+    status = models.CharField(choices=Status.choices, default=Status.ACTIVE, null=False, blank=False)
 
 class Ticket(models.Model):
     ticket_type = models.ForeignKey(TicketType, related_name='tickets', on_delete=models.CASCADE, null=False, blank=False)
     buyer = models.ForeignKey(User, related_name='tickets', on_delete=models.CASCADE, null=False, blank=False)
-    unique_code = models.CharField(max_lenght=20, default=generate_unique_code, unique=True, null=False, blank=False, editable=False)
-    status = models.CharField(max_lenght=20, choices=Status.choices, default=Status.ACTIVE, null=False, blank=False)
+    unique_code = models.CharField(default=generate_unique_code, unique=True, null=False, blank=False, editable=False)
+    status = models.CharField(choices=Status.choices, default=Status.ACTIVE, null=False, blank=False)
     bought_at = models.DateTimeField(null=False, blank=False)
     used_at = models.DateTimeField(null=True, blank=True)
-    price_paid = models.DecimalField(max_digits=10, decimal_places=2, localize=True, null=False, blank=False)
+    price_paid = models.DecimalField(max_digits=10, decimal_places=2, null=False, blank=False)
 
     def generate_qr_response(self):     
         qr_data = {

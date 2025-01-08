@@ -1,7 +1,7 @@
 from django.shortcuts import render
 from .models import User
 from .serializer import UserRegisterSerializer, UserSerializer
-from .permissions import IsAdminUser, IsOrganizerUser, IsParticipantUser
+from core.permissions import IsAdminUser, IsOrganizerUser, IsParticipantUser
 
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated, AllowAny
