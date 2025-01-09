@@ -38,6 +38,7 @@ class CustomUserManager(UserManager):
 
 class User(AbstractBaseUser, PermissionsMixin):
 
+    id = models.AutoField(primary_key=True)
     email = models.EmailField(blank=True, default='', unique=True)
     name = models.CharField(max_length=255, blank=True, default='')
 
@@ -59,7 +60,7 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     objects = CustomUserManager()
 
-    USERNAME_FIELD = 'email'
+    USERNAME_FIELD = 'email' 
     REQUIRED_FIELDS = []
 
     # related_name para evitar conflitos
@@ -93,6 +94,7 @@ class User(AbstractBaseUser, PermissionsMixin):
         if self.profile_type == UserProfileType.ADMIN:
             if not self.is_staff or not self.is_superuser:
                 raise ValidationError("Administrators must be staff and superuser.")
+
                 
         if self.profile_type == UserProfileType.ORGANIZER:
             if self.is_staff or self.is_superuser:
@@ -103,3 +105,7 @@ class User(AbstractBaseUser, PermissionsMixin):
                 raise ValidationError("Business name is mandatory for organizers.")
             if not self.commercial_address:
                 raise ValidationError("Commercial address is mandatory for organizers.")
+            
+    def save(self, *args, **kwargs):
+        self.clean()  # Chamar clean antes de salvar
+        super().save(*args, **kwargs)
