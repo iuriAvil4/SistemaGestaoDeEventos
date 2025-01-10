@@ -1,4 +1,5 @@
 from django.db import models
+from django.utils.text import slugify
 from django.forms import ValidationError
 from users.models import User
 from django.utils import timezone
@@ -16,7 +17,7 @@ class CategoryStatusChoices(models.TextChoices):
 
 class Event(models.Model):
     title = models.CharField(max_length=255, null=False, blank=False)
-    slug = models.SlugField(null=False, blank=False)
+    slug = models.SlugField(null=True, blank=True)
     description = models.TextField(null=False, blank=False)
     start_date = models.DateTimeField(null=False, blank=False)
     end_date = models.DateTimeField(null=False, blank=False)
@@ -39,6 +40,8 @@ class Event(models.Model):
         self.last_modified = timezone.now()
         if not self.id:
             self.created_at = self.last_modified
+        if not self.slug:
+            self.slug = slugify(self.title)
         return super(Event, self).save(*args, **kwargs)
 
 class Category(models.Model):

@@ -15,6 +15,17 @@ class UserRegisterSerializer(serializers.ModelSerializer):
         user.save()  
         return user    
 
+class UserOrganizerRegisterSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['email', 'password', 'name', 'profile_type', 'phone_number', 'cnpj_cpf', 'business_name', 'commercial_address',  'is_staff', 'is_superuser']
+
+    def create(self, validated_data):
+        user = User(**validated_data)
+        user.set_password(validated_data['password'])  
+        user.clean()
+        user.save()  
+        return user    
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:

@@ -107,5 +107,5 @@ class User(AbstractBaseUser, PermissionsMixin):
                 raise ValidationError("Commercial address is mandatory for organizers.")
             
     def save(self, *args, **kwargs):
-        self.clean()  # Chamar clean antes de salvar
+        self.clean() 
         super().save(*args, **kwargs)

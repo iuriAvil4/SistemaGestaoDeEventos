@@ -1,6 +1,6 @@
 from django.shortcuts import render
 from .models import User
-from .serializer import UserRegisterSerializer, UserSerializer
+from .serializer import UserRegisterSerializer, UserSerializer, UserOrganizerRegisterSerializer
 from core.permissions import IsAdminUser, IsOrganizerUser, IsParticipantUser
 
 from rest_framework.decorators import api_view, permission_classes
@@ -86,9 +86,19 @@ class CustomRefreshTokenView(TokenRefreshView):
 
 
 @api_view(['POST'])
-@permission_classes([AllowAny])
+@permission_classes([IsAdminUser, IsAuthenticated])
 def register_user(request):
     serializer = UserRegisterSerializer(data=request.data)
+    if serializer.is_valid():
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def register_user_organizer(request):
+    serializer = UserOrganizerRegisterSerializer(data=request.data)
     if serializer.is_valid():
         serializer.save()
         return Response(serializer.data, status=status.HTTP_201_CREATED)
