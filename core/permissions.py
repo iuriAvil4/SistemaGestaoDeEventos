@@ -1,15 +1,16 @@
 from rest_framework.permissions import BasePermission
 
+
 class IsAdminUser(BasePermission):
     def has_permission(self, request, view):
-        return request.user and request.user.profile_type == 'ADMIN'
+        return request.user and request.user.is_authenticated and request.user.profile_type == 'ADMIN'
     
     
 class IsOrganizerUser(BasePermission):
     def has_permission(self, request, view):
-        return request.user and request.user.profile_type == 'ORGANIZER'
+        return request.user and request.user.is_authenticated and request.user.profile_type == 'ORGANIZER'
     
 
 class IsParticipantUser(BasePermission):
     def has_permission(self, request, view):
-        return request.user and request.user.profile_type == 'PARTICIPANT'
+        return request.user and request.user.is_authenticated and request.user.profile_type == 'PARTICIPANT'

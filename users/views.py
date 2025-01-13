@@ -86,7 +86,7 @@ class CustomRefreshTokenView(TokenRefreshView):
 
 
 @api_view(['POST'])
-@permission_classes([IsAdminUser, IsAuthenticated])
+@permission_classes([IsAdminUser])
 def register_user(request):
     serializer = UserRegisterSerializer(data=request.data)
     if serializer.is_valid():
@@ -124,7 +124,7 @@ def is_authenticated(request):
 
 
 @api_view(['GET'])
-@permission_classes([IsAuthenticated, IsAdminUser])
+@permission_classes([IsAdminUser])
 def get_users(request):
     users = User.objects.filter(is_active=True)
     serializer = UserSerializer(users, many=True)
