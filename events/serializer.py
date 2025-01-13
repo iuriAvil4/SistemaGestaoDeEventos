@@ -30,6 +30,13 @@ class EventRegisterSerializer(serializers.ModelSerializer):
         return super().create(validated_data)
 
     def validate(self, data):
+        instance = getattr(self, 'instance', None) 
+        if instance:
+            if instance.event_status == 'FINISHED':  
+                if data.get('event_status') != 'FINISHED' or len(data) > 1:
+                    raise serializers.ValidationError(
+                        "Cannot modify other fields of a completed event."
+                    )
         if data['start_date'] > data['end_date']:
             raise serializers.ValidationError("The start date must be before the end date.")
         if data['total_capacity'] < 1:

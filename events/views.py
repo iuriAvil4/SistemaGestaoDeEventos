@@ -49,13 +49,13 @@ def update_event(request, id):
             {"error": f"Event with id {id} does not exist."},
             status=status.HTTP_404_NOT_FOUND
         )
-
+    
     serializer = EventRegisterSerializer(event, data=request.data, partial=True)
     if serializer.is_valid():
         serializer.save()
         return Response(serializer.data, status=status.HTTP_202_ACCEPTED)
+    
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
 
 @api_view(['DELETE'])
 @permission_classes([IsAdminUser | IsOrganizerUser])
@@ -82,9 +82,42 @@ def create_category(request):
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
+@api_view(['GET'])
+@permission_classes([IsAdminUser])
 def list_categories(request):
     categories = Category.objects.all().order_by("name")
     serializer = CategorySerializer(categories, many=True)
     return Response(serializer.data, status=status.HTTP_200_OK)
     
 
+@api_view(['PUT'])
+@permission_classes([IsAdminUser])
+def update_category(request, id):
+    try:
+        category = Category.objects.get(pk=id)
+    except Category.DoesNotExist:
+        return Response(
+            {"error": f"Category with id {id} does not exist."},
+            status=status.HTTP_404_NOT_FOUND
+        )
+
+    serializer = CategorySerializer(category, data=request.data, partial=True)
+    if serializer.is_valid():
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_202_ACCEPTED)
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(['DELETE'])
+@permission_classes([IsAdminUser])
+def delete_category(request, id):
+        try:
+            category = Category.objects.filter(pk=id)
+            category.delete()
+            return Response({"message": f"Category with id {id} deleted successfully."}, status=status.HTTP_204_NO_CONTENT)
+        except Event.DoesNotExist:
+            return Response(
+                {"error": f"Event with id {id} does not exist."},
+                status=status.HTTP_404_NOT_FOUND
+            )
+       
