@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from models import Ticket, TicketType
+from .models import Ticket, TicketType
 
 
 class TicketRegisterSerializer(serializers.ModelSerializer):
@@ -16,19 +16,21 @@ class TicketRegisterSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("The price paid must be greater than zero.")
         return data
     
+
 class TicketTypeRegisterSerializer(serializers.ModelSerializer):
     class Meta:
         model = TicketType
         fields = [
-            'id', 'event', 'name', 'description', 'price', 'quantity_available', 'sale_start', 'sale_end', 'ticket_type_status'
+            'event', 'name', 'description', 'price', 'quantity_available', 'sale_start', 'sale_end', 'ticket_type_status'
         ]
 
     def validate(self, data):
         if data['sale_start'] > data['sale_end']:
             raise serializers.ValidationError("The sale start date must be before the sale end date.")
         if data['quantity_available'] < 1:
-            raise serializers.ValidationError("The quantity avaiable must be greater than zero.")
+            raise serializers.ValidationError("The quantity available must be greater than zero.")
         return data
+
 
 class TicketSerializer(serializers.ModelSerializer):
     class Meta:
@@ -36,6 +38,7 @@ class TicketSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'ticket_type', 'buyer', 'unique_code', 'ticket_status', 'bought_at', 'used_at', 'price_paid'
         ]
+
 
 class TicketTypeSerializer(serializers.ModelSerializer):
     class Meta:

@@ -30,4 +30,4 @@ class UserOrganizerRegisterSerializer(serializers.ModelSerializer):
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ['email', 'name', 'profile_type']  
+        fields = ['id', 'email', 'name', 'profile_type']  

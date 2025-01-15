@@ -36,8 +36,10 @@ class TicketType(models.Model):
     def clean(self):
         if self.sale_start > self.sale_end:
             raise ValidationError('The start date must be before the end date')       
-        if self.quantity_avaiable < 1:
+        if self.quantity_available < 1:
             raise ValidationError('The total capacity must be greater than zero')
+        if self.name == TicketTypeNameChoices.SOCIAL and self.price > 0:
+            raise ValidationError('The social ticket must be free.')
         
     def save(self, *args, **kwargs):
         self.clean()
