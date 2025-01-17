@@ -1,4 +1,6 @@
-from django.shortcuts import render
+from datetime import timezone
+from django.forms import ValidationError
+from django.shortcuts import get_object_or_404, render
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework import status
@@ -13,15 +15,18 @@ from .serializer import TicketTypeRegisterSerializer, TicketSerializer, TicketRe
 @api_view(['POST'])
 @permission_classes([IsAdminUser | IsOrganizerUser])
 def create_ticket_type(request):
-    data = request.data.copy()  
+    data = request.data.copy()
     event_id = data.get("event")
     if not event_id:
-        return Response({"detail": "O campo 'event' é obrigatório."}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({"detail": "The 'event' field is required."}, status=status.HTTP_400_BAD_REQUEST)
+    
     try:
         event = Event.objects.get(pk=event_id)
+        if event.event_status != 'PUBLISHED':
+            return Response({"detail": f"Event with ID {event_id} is not published."}, status=status.HTTP_400_BAD_REQUEST)
     except Event.DoesNotExist:
-        return Response({"detail": f"Evento com ID {event_id} não encontrado."}, status=status.HTTP_404_NOT_FOUND)
-    
+        return Response({"detail": f"Event with ID {event_id} not found."}, status=status.HTTP_404_NOT_FOUND)
+
     serializer = TicketTypeRegisterSerializer(data=data, context={'request': request})
     if serializer.is_valid():
         ticket_type = serializer.save(event=event)
@@ -75,13 +80,14 @@ def delete_ticket_type(request, id):
 @api_view(['POST'])
 @permission_classes([IsAdminUser | IsOrganizerUser])
 def create_ticket(request):
-    data = request.data.copy()  
+    data = request.data.copy()
     id_ticket_type = data.get("ticket_type")
     id_buyer = data.get("buyer")
-    if not id_ticket_type:
-        return Response({"detail": "O campo 'ticket_type' é obrigatório."}, status=status.HTTP_400_BAD_REQUEST)
-    if not id_buyer:
-        return Response({"detail": "O campo 'buyer' é obrigatório."}, status=status.HTTP_400_BAD_REQUEST)
+    
+    if not id_ticket_type or not id_buyer:
+        return Response({"detail": "Os campos 'ticket_type' e 'buyer' são obrigatórios."}, status=status.HTTP_400_BAD_REQUEST)
+
+
     try:
         ticket_type = TicketType.objects.get(pk=id_ticket_type)
         buyer = User.objects.get(pk=id_buyer)
@@ -90,11 +96,21 @@ def create_ticket(request):
     except User.DoesNotExist:
         return Response({"detail": f"User com ID {id_buyer} não encontrado."}, status=status.HTTP_404_NOT_FOUND)
     
+    if Ticket.objects.filter(ticket_type=ticket_type, buyer=buyer).exists():
+        return Response({"detail": "O usuário já possui um ticket deste tipo para este evento."}, status=status.HTTP_400_BAD_REQUEST)
+
+    try:
+        ticket_type.reserve_ticket()
+    except ValidationError as e:
+        return Response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+    
     serializer = TicketRegisterSerializer(data=data, context={'request': request})
     if serializer.is_valid():
         ticket = serializer.save(ticket_type=ticket_type, buyer=buyer)
         response_serializer = TicketRegisterSerializer(ticket)
         return Response(response_serializer.data, status=status.HTTP_201_CREATED)
+    
+    ticket_type.release_ticket()
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -163,3 +179,76 @@ def delete_ticket(request, id):
             {"error": f"Ticket with id {id} does not exist."},
             status=status.HTTP_404_NOT_FOUND
         )
+
+
+@api_view(['GET'])
+@permission_classes([IsAdminUser | IsOrganizerUser | IsParticipantUser])
+def generate_ticket_qr(request, ticket_id):
+    try:
+        ticket = Ticket.objects.get(pk=ticket_id)
+        if not request.user.is_staff and ticket.buyer != request.user:
+            return Response({"detail": "Você não tem permissão para acessar este ticket."}, status=status.HTTP_403_FORBIDDEN)
+        qr_response = ticket.generate_qr_response()
+        return qr_response  
+    except Ticket.DoesNotExist:
+        return Response({"detail": f"Ticket com ID {ticket_id} não encontrado."}, status=status.HTTP_404_NOT_FOUND)
+    except Exception as e:
+        return Response({"error": f"Ocorreu um erro: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
+
+
+#----------------------------------------------------------------------------------------------------------------------------
+
+@api_view(['DELETE'])
+@permission_classes([IsAdminUser | IsOrganizerUser | IsParticipantUser])
+def cancel_ticket(request, id):
+    try:
+        ticket = Ticket.objects.get(pk=id)
+        if not request.user.is_staff and ticket.buyer != request.user:
+            return Response({"detail": "Você não tem permissão para cancelar este ticket."}, status=status.HTTP_403_FORBIDDEN)
+        
+        ticket.change_ticket_status('CANCELED')
+        ticket.ticket_type.release_ticket()
+    
+        return Response({"message": f"Ticket with id {id} canceled successfully."}, status=status.HTTP_200_OK)
+    except Ticket.DoesNotExist:
+        return Response(
+            {"error": f"Ticket with id {id} does not exist."},
+            status=status.HTTP_404_NOT_FOUND
+        )
+    except Exception as e:
+        return Response({"error": f"Ocorreu um erro: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['PUT'])
+@permission_classes([IsAdminUser | IsOrganizerUser | IsParticipantUser])
+def use_ticket(request, id):
+    try:
+        ticket = Ticket.objects.get(pk=id)
+        if not request.user.is_staff and ticket.buyer != request.user:
+            return Response({"detail": "Você não tem permissão para usar este ticket."}, status=status.HTTP_403_FORBIDDEN)
+
+        ticket.change_ticket_status('USED')
+
+        return Response({"message": f"Ticket with id {id} used successfully."}, status=status.HTTP_200_OK)
+    except Ticket.DoesNotExist:
+        return Response({"error": f"Ticket with id {id} does not exist."}, status=status.HTTP_404_NOT_FOUND)
+    except ValidationError as e:
+        return Response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+    except Exception as e:
+        return Response({"error": f"Ocorreu um erro: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['PUT'])
+@permission_classes([IsAdminUser | IsOrganizerUser | IsParticipantUser])
+def pay_ticket(request, id):
+    try:
+        ticket = Ticket.objects.get(pk=id)
+        ticket.change_ticket_status('ACTIVE')
+        return Response({"message": f"Ticket with id {id} paid successfully."}, status=status.HTTP_200_OK)
+    except Ticket.DoesNotExist:
+        return Response({"error": f"Ticket with id {id} does not exist."}, status=status.HTTP_404_NOT_FOUND)
+    except ValidationError as e:
+        return Response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+    except Exception as e:
+        return Response({"error": f"Ocorreu um erro: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

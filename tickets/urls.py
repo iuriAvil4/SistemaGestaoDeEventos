@@ -8,7 +8,8 @@ from .views import (create_ticket_type,
                     list_user_tickets, 
                     list_tickets_by_buyer, 
                     update_ticket,
-                    delete_ticket)
+                    delete_ticket,
+                    generate_ticket_qr,)
 
 urlpatterns = [
     path('create_ticket_type/', create_ticket_type),
@@ -21,5 +22,6 @@ urlpatterns = [
     path('list_user_tickets/', list_user_tickets),
     path('list_tickets_by_buyer/<int:id>', list_tickets_by_buyer),
     path('update_ticket/<int:id>', update_ticket),
-    path('delete_ticket/<int:id>', delete_ticket)
+    path('delete_ticket/<int:id>', delete_ticket),
+    path('generate_ticket_qr/<int:ticket_id>', generate_ticket_qr)
 ]

@@ -1,3 +1,4 @@
+from django.forms import ValidationError
 from rest_framework import serializers
 from .models import Ticket, TicketType
 
@@ -10,6 +11,12 @@ class TicketRegisterSerializer(serializers.ModelSerializer):
         ]
 
     def validate(self, data):
+        ticket_type = data.get('ticket_type')
+        buyer = data.get('buyer')
+
+        if Ticket.objects.filter(ticket_type=ticket_type, buyer=buyer).exists():
+            raise serializers.ValidationError("O usuário já possui um ticket deste tipo para este evento.")
+
         if data['bought_at'] > data['used_at']:
             raise serializers.ValidationError("The bought date must be before the used date.")
         if data['price_paid'] < 0:
