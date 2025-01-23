@@ -88,6 +88,9 @@ class CustomRefreshTokenView(TokenRefreshView):
 @api_view(['POST'])
 @permission_classes([IsAdminUser])
 def register_user(request):
+    """
+    Register a new user. Admin-only access.
+    """
     serializer = UserRegisterSerializer(data=request.data)
     if serializer.is_valid():
         serializer.save()
@@ -98,6 +101,9 @@ def register_user(request):
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def register_user_organizer(request):
+    """
+    Register a new organizer user. Accessible to any user.
+    """
     serializer = UserOrganizerRegisterSerializer(data=request.data)
     if serializer.is_valid():
         serializer.save()
@@ -107,6 +113,9 @@ def register_user_organizer(request):
 
 @api_view(['POST'])
 def logout(request):
+    """
+    Log out the user by clearing the authentication cookies.
+    """
     try:
         res = Response()
         res.data = {'success': True}
@@ -120,12 +129,18 @@ def logout(request):
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def is_authenticated(request):
+    """
+    Check if the current user is authenticated.
+    """
     return Response({'authenticated': True})
 
 
 @api_view(['GET'])
 @permission_classes([IsAdminUser])
 def get_users(request):
+    """
+    Retrieve a list of all active users. Admin-only access.
+    """
     users = User.objects.filter(is_active=True)
     serializer = UserSerializer(users, many=True)
     return Response(serializer.data, status=status.HTTP_200_OK)

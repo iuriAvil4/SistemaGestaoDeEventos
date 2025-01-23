@@ -4,18 +4,14 @@ from django.forms import ValidationError
 from users.models import User
 from django.utils import timezone
 
-class EventStatusChoices(models.TextChoices):
-    SKETCH = 'SKETCH', 'Sketch'
-    PUBLISHED = 'PUBLISHED', 'Published'
-    CANCELED = 'CANCELED', 'Canceled'
-    FINISHED = 'FINISHED', 'Finished'
-
-class CategoryStatusChoices(models.TextChoices):
-    ACTIVE = 'ACTIVE'
-    INACTIVE = 'INACTIVE'
-
 
 class Event(models.Model):
+    class EventStatusChoices(models.TextChoices):
+        SKETCH = 'SKETCH', 'Sketch'
+        PUBLISHED = 'PUBLISHED', 'Published'
+        CANCELED = 'CANCELED', 'Canceled'
+        FINISHED = 'FINISHED', 'Finished'
+
     title = models.CharField(max_length=255, null=False, blank=False)
     slug = models.SlugField(null=True, blank=True)
     description = models.TextField(null=False, blank=False)
@@ -45,6 +41,10 @@ class Event(models.Model):
         return super(Event, self).save(*args, **kwargs)
 
 class Category(models.Model):
+    class CategoryStatusChoices(models.TextChoices):
+        ACTIVE = 'ACTIVE'
+        INACTIVE = 'INACTIVE'
+
     name = models.CharField(max_length=255, null=False, blank=False)
     slug = models.SlugField(null=False, blank=False)
     description = models.TextField(null=False, blank=False)

@@ -11,7 +11,7 @@ from .serializer import EventRegisterSerializer, EventSerializer, CategorySerial
 @api_view(['GET'])
 @permission_classes([IsAdminUser | IsOrganizerUser | IsParticipantUser])
 def list_events(request):
-    events = Event.objects.all().order_by("title")
+    events = Event.objects.select_related('organizer').prefetch_related('categories').all().order_by("title")
     serializer = EventSerializer(events, many=True)
     return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -33,7 +33,7 @@ def create_event(request):
 @permission_classes([IsAdminUser | IsOrganizerUser])
 def list_organizer_events(request):
     user = request.user
-    events = Event.objects.filter(organizer=user) 
+    events = Event.objects.filter(organizer=user).select_related('organizer').prefetch_related('categories')
     serializer = EventSerializer(events, many=True)
     return Response(serializer.data, status=status.HTTP_200_OK)
     
@@ -42,7 +42,7 @@ def list_organizer_events(request):
 @permission_classes([IsAdminUser | IsOrganizerUser])
 def update_event(request, id):
     try:
-        event = Event.objects.get(pk=id)
+        event = Event.objects.select_related('organizer').prefetch_related('categories').get(pk=id)
     except Event.DoesNotExist:
         return Response(
             {"error": f"Event with id {id} does not exist."},
@@ -84,9 +84,10 @@ def create_category(request):
 @api_view(['GET'])
 @permission_classes([IsAdminUser])
 def list_categories(request):
-    categories = Category.objects.all().order_by("name")
-    serializer = CategorySerializer(categories, many=True)
-    return Response(serializer.data, status=status.HTTP_200_OK)
+    categories = Category.objects.all().values(
+        'id', 'name', 'slug', 'description', 'category_status'
+    ).order_by("name")
+    return Response(categories, status=status.HTTP_200_OK)
     
 
 @api_view(['PUT'])
@@ -110,13 +111,13 @@ def update_category(request, id):
 @api_view(['DELETE'])
 @permission_classes([IsAdminUser])
 def delete_category(request, id):
-        try:
-            category = Category.objects.filter(pk=id)
-            category.delete()
-            return Response({"message": f"Category with id {id} deleted successfully."}, status=status.HTTP_204_NO_CONTENT)
-        except Event.DoesNotExist:
-            return Response(
-                {"error": f"Event with id {id} does not exist."},
-                status=status.HTTP_404_NOT_FOUND
-            )
+    try:
+        category = Category.objects.get(pk=id)
+        category.delete()
+        return Response({"message": f"Category with id {id} deleted successfully."}, status=status.HTTP_204_NO_CONTENT)
+    except Category.DoesNotExist:
+        return Response(
+            {"error": f"Category with id {id} does not exist."},
+            status=status.HTTP_404_NOT_FOUND
+        )
        

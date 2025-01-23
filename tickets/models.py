@@ -1,4 +1,4 @@
-from datetime import timezone
+from django.utils import timezone
 from django.db import models
 from django.forms import ValidationError
 from django.http import HttpResponse
@@ -13,28 +13,19 @@ import qrcode
 def generate_unique_code():
     return f'TIX-{uuid.uuid4().hex[:8].upper()}'
 
-class TicketTypeNameChoices(models.TextChoices):
-    MEIA_ENTRADA = 'MEIA_ENTRADA', 'Meia Entrada'
-    INTEIRA = 'INTEIRA', 'Inteira'
-    SOCIAL = 'SOCIAL', 'Social'
-    REGULAR = 'REGULAR', 'Regular'
-    VIP = 'VIP', 'VIP'
-    CAMAROTE = 'CAMAROTE', 'Camarote'
-
-class StatusChoices(models.TextChoices):
-    ACTIVE = 'ACTIVE'
-    INACTIVE = 'INACTIVE'
-
-class TicketStatusChoices(models.TextChoices):
-    ACTIVE = 'ACTIVE', 'Active'
-    INACTIVE = 'INACTIVE', 'INACTIVE'
-    PENDING_PAYMENT = 'PENDING_PAYMENT ', 'Pending_Payment'
-    CANCELED = 'CANCELED', 'Canceled'
-    USED = 'USED', 'Used'
-    EXPIRED = 'EXPIRED', 'Expired'
-    
-
 class TicketType(models.Model):
+    class TicketTypeNameChoices(models.TextChoices):
+        MEIA_ENTRADA = 'MEIA_ENTRADA', 'Meia Entrada'
+        INTEIRA = 'INTEIRA', 'Inteira'
+        SOCIAL = 'SOCIAL', 'Social'
+        REGULAR = 'REGULAR', 'Regular'
+        VIP = 'VIP', 'VIP'
+        CAMAROTE = 'CAMAROTE', 'Camarote'
+
+    class StatusChoices(models.TextChoices):
+        ACTIVE = 'ACTIVE'
+        INACTIVE = 'INACTIVE'
+
     event = models.ForeignKey(Event, related_name='ticket_types', on_delete=models.CASCADE, null=False, blank=False)
     name = models.CharField(max_length=50, choices=TicketTypeNameChoices.choices, default=TicketTypeNameChoices.REGULAR, null=False, blank=False)
     description =models.TextField(null=False, blank=False)
@@ -66,14 +57,23 @@ class TicketType(models.Model):
             raise ValidationError('The total capacity must be greater than zero.')
         if self.event.event_status != 'PUBLISHED':
             raise ValidationError('Tickets can only be created for published events.')
-        if self.name == TicketTypeNameChoices.SOCIAL and self.price > 0:
+        if self.name == TicketType.TicketTypeNameChoices.SOCIAL and self.price > 0:
             raise ValidationError('The social ticket must be free.')
         
     def save(self, *args, **kwargs):
         self.clean()
         return super(TicketType, self).save(*args, **kwargs)
 
+
 class Ticket(models.Model):
+    class TicketStatusChoices(models.TextChoices):
+        ACTIVE = 'ACTIVE', 'Active'
+        INACTIVE = 'INACTIVE', 'INACTIVE'
+        PENDING_PAYMENT = 'PENDING_PAYMENT ', 'Pending_Payment'
+        CANCELED = 'CANCELED', 'Canceled'
+        USED = 'USED', 'Used'
+        EXPIRED = 'EXPIRED', 'Expired'
+
     ticket_type = models.ForeignKey(TicketType, related_name='tickets', on_delete=models.CASCADE, null=False, blank=False)
     buyer = models.ForeignKey(User, related_name='tickets', on_delete=models.CASCADE, null=False, blank=False)
     unique_code = models.CharField(max_length=50, default=generate_unique_code, unique=True, null=False, blank=False, editable=False)
