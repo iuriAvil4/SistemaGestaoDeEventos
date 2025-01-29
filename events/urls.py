@@ -1,15 +1,16 @@
 from django.urls import path
-from .views import create_event, create_category, list_events, update_event, delete_event, list_organizer_events, list_categories, update_category, delete_category
+from .views import (
+    EventListCreateView,
+    EventDetailView,
+    OrganizerEventListView,
+    CategoryListCreateView,
+    CategoryDetailView
+)
+
 urlpatterns = [
-    path('list_organizer_events/', list_organizer_events),
-
-    path('create_event/', create_event),
-    path('list_events/', list_events),
-    path('update_event/<int:id>', update_event),
-    path('delete_event/<int:id>', delete_event),
-
-    path('create_category/', create_category),
-    path('list_categories/', list_categories),
-    path('update_category/<int:id>', update_category),
-    path('delete_category/<int:id>', delete_category),
+    path('events/', EventListCreateView.as_view(), name='event-list-create'),
+    path('events/<int:pk>/', EventDetailView.as_view(), name='event-detail'),
+    path('events/organizer/', OrganizerEventListView.as_view(), name='organizer-event-list'),
+    path('categories/', CategoryListCreateView.as_view(), name='category-list-create'),
+    path('categories/<int:pk>/', CategoryDetailView.as_view(), name='category-detail'),
 ]

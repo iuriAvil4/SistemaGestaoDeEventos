@@ -1,6 +1,6 @@
 
 venv/
-db.sqlite3
+storage.db
 
 .DS_Store
 Thumbs.db

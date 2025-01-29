@@ -28,7 +28,7 @@ class TicketTypeRegisterSerializer(serializers.ModelSerializer):
     class Meta:
         model = TicketType
         fields = [
-            'event', 'name', 'description', 'price', 'quantity_available', 'sale_start', 'sale_end', 'ticket_type_status'
+            'id', 'event', 'name', 'description', 'price', 'quantity_available', 'sale_start', 'sale_end', 'ticket_type_status'
         ]
 
     def validate(self, data):

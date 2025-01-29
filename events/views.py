@@ -1,123 +1,69 @@
-from django.shortcuts import render
-from rest_framework.decorators import api_view, permission_classes
-from rest_framework.response import Response
-from rest_framework import status
-
+from rest_framework.generics import ListCreateAPIView, RetrieveUpdateDestroyAPIView
 from core.permissions import IsAdminUser, IsOrganizerUser, IsParticipantUser
-from .models import Event, Category
-from .serializer import EventRegisterSerializer, EventSerializer, CategorySerializer
+from rest_framework.response import Response
+from rest_framework.views import APIView
+from .services import EventService, CategoryService
+from .serializer import EventSerializer, EventRegisterSerializer, CategorySerializer
 
 
-@api_view(['GET'])
-@permission_classes([IsAdminUser | IsOrganizerUser | IsParticipantUser])
-def list_events(request):
-    events = Event.objects.select_related('organizer').prefetch_related('categories').all().order_by("title")
-    serializer = EventSerializer(events, many=True)
-    return Response(serializer.data, status=status.HTTP_200_OK)
+# Event Views
+class EventListCreateView(ListCreateAPIView):
+    permission_classes = [IsAdminUser | IsOrganizerUser]
+    serializer_class = EventRegisterSerializer
+
+    def get_queryset(self):
+        return EventService.get_all_events()
+
+    def perform_create(self, serializer):
+        EventService.create_event(serializer.validated_data, self.request.user)
 
 
-@api_view(['POST'])
-@permission_classes([IsAdminUser | IsOrganizerUser])
-def create_event(request):
-    user = request.user
-    data = request.data.copy()
-    serializer = EventRegisterSerializer(data=data, context={'request': request})
-    if serializer.is_valid():
-        event = serializer.save(organizer=user) 
-        response_serializer = EventRegisterSerializer(event)
-        return Response(response_serializer.data, status=status.HTTP_201_CREATED)
-    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+class EventDetailView(RetrieveUpdateDestroyAPIView):
+    permission_classes = [IsAdminUser | IsOrganizerUser]
+    serializer_class = EventRegisterSerializer
+
+    def get_queryset(self):
+        return EventService.get_all_events()
+
+    def perform_update(self, serializer):
+        event = self.get_object()
+        EventService.update_event(event, serializer.validated_data)
+
+    def perform_destroy(self, instance):
+        EventService.delete_event(instance)
 
 
-@api_view(['GET'])
-@permission_classes([IsAdminUser | IsOrganizerUser])
-def list_organizer_events(request):
-    user = request.user
-    events = Event.objects.filter(organizer=user).select_related('organizer').prefetch_related('categories')
-    serializer = EventSerializer(events, many=True)
-    return Response(serializer.data, status=status.HTTP_200_OK)
-    
+class OrganizerEventListView(APIView):
+    permission_classes = [IsAdminUser | IsOrganizerUser]
 
-@api_view(['PUT'])
-@permission_classes([IsAdminUser | IsOrganizerUser])
-def update_event(request, id):
-    try:
-        event = Event.objects.select_related('organizer').prefetch_related('categories').get(pk=id)
-    except Event.DoesNotExist:
-        return Response(
-            {"error": f"Event with id {id} does not exist."},
-            status=status.HTTP_404_NOT_FOUND
-        )
-    
-    serializer = EventRegisterSerializer(event, data=request.data, partial=True)
-    if serializer.is_valid():
-        serializer.save()
-        return Response(serializer.data, status=status.HTTP_202_ACCEPTED)
-    
-    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-@api_view(['DELETE'])
-@permission_classes([IsAdminUser | IsOrganizerUser])
-def delete_event(request, id):
-    try:
-        event = Event.objects.get(pk=id)
-        event.delete()
-        return Response({"message": f"Event with id {id} deleted successfully."}, status=status.HTTP_204_NO_CONTENT)
-    except Event.DoesNotExist:
-        return Response(
-            {"error": f"Event with id {id} does not exist."},
-            status=status.HTTP_404_NOT_FOUND
-        )
-
-#---------------------------------------------------------------------------------------
-
-@api_view(['POST'])
-@permission_classes([IsAdminUser])
-def create_category(request):
-    serializer = CategorySerializer(data=request.data)
-    if serializer.is_valid():
-        serializer.save()
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
-    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    def get(self, request):
+        events = EventService.get_events_by_organizer(request.user)
+        serializer = EventSerializer(events, many=True)
+        return Response(serializer.data)
 
 
-@api_view(['GET'])
-@permission_classes([IsAdminUser])
-def list_categories(request):
-    categories = Category.objects.all().values(
-        'id', 'name', 'slug', 'description', 'category_status'
-    ).order_by("name")
-    return Response(categories, status=status.HTTP_200_OK)
-    
+# Category Views
+class CategoryListCreateView(ListCreateAPIView):
+    permission_classes = [IsAdminUser]
+    serializer_class = CategorySerializer
 
-@api_view(['PUT'])
-@permission_classes([IsAdminUser])
-def update_category(request, id):
-    try:
-        category = Category.objects.get(pk=id)
-    except Category.DoesNotExist:
-        return Response(
-            {"error": f"Category with id {id} does not exist."},
-            status=status.HTTP_404_NOT_FOUND
-        )
+    def get_queryset(self):
+        return CategoryService.get_all_categories()
 
-    serializer = CategorySerializer(category, data=request.data, partial=True)
-    if serializer.is_valid():
-        serializer.save()
-        return Response(serializer.data, status=status.HTTP_202_ACCEPTED)
-    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    def perform_create(self, serializer):
+        CategoryService.create_category(serializer.validated_data)
 
 
-@api_view(['DELETE'])
-@permission_classes([IsAdminUser])
-def delete_category(request, id):
-    try:
-        category = Category.objects.get(pk=id)
-        category.delete()
-        return Response({"message": f"Category with id {id} deleted successfully."}, status=status.HTTP_204_NO_CONTENT)
-    except Category.DoesNotExist:
-        return Response(
-            {"error": f"Category with id {id} does not exist."},
-            status=status.HTTP_404_NOT_FOUND
-        )
-       
+class CategoryDetailView(RetrieveUpdateDestroyAPIView):
+    permission_classes = [IsAdminUser]
+    serializer_class = CategorySerializer
+
+    def get_queryset(self):
+        return CategoryService.get_all_categories()
+
+    def perform_update(self, serializer):
+        category = self.get_object()
+        CategoryService.update_category(category, serializer.validated_data)
+
+    def perform_destroy(self, instance):
+        CategoryService.delete_category(instance)

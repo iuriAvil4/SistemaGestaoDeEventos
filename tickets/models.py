@@ -38,7 +38,7 @@ class TicketType(models.Model):
     def reserve_ticket(self):
         with transaction.atomic():
             self.refresh_from_db()  
-            if self.quantity_available <= 0:
+            if self.quantity_available == 0:
                 raise ValidationError('No tickets available for this type.')
             self.quantity_available -= 1
             self.save()
@@ -91,26 +91,6 @@ class Ticket(models.Model):
     def save(self, *args, **kwargs):
         self.clean()
         return super(Ticket, self).save(*args, **kwargs)
-
-    def change_ticket_status(self, new_status):
-        valid_statuses = {'ACTIVE', 'INACTIVE', 'PENDING_PAYMENT', 'CANCELED', 'USED', 'EXPIRED'}
-        
-        if new_status not in valid_statuses:
-            raise ValidationError(f"'{new_status}' is not a valid ticket status.")
-        
-        if self.ticket_status == 'CANCELED' or self.ticket_status == 'USED':
-            raise ValidationError(f"Ticket cannot transition from '{self.ticket_status}' to '{new_status}'.")
-        
-        if new_status == 'USED' and self.ticket_status != 'ACTIVE':
-            raise ValidationError(f"Only ACTIVE tickets can be marked as USED.")
-        
-        if new_status == 'ACTIVE' and self.ticket_status != 'PENDING_PAYMENT':
-            raise ValidationError(f"Only PENDING_PAYMENT tickets can transition to ACTIVE.")
-
-        self.ticket_status = new_status
-        if new_status == 'USED':
-            self.used_at = timezone.now()
-        self.save()
 
     def generate_qr_response(self):     
         qr_data = {
