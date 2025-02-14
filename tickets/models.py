@@ -69,7 +69,7 @@ class Ticket(models.Model):
     class TicketStatusChoices(models.TextChoices):
         ACTIVE = 'ACTIVE', 'Active'
         INACTIVE = 'INACTIVE', 'INACTIVE'
-        PENDING_PAYMENT = 'PENDING_PAYMENT ', 'Pending_Payment'
+        PENDING_PAYMENT = 'PENDING_PAYMENT', 'Pending_Payment'
         CANCELED = 'CANCELED', 'Canceled'
         USED = 'USED', 'Used'
         EXPIRED = 'EXPIRED', 'Expired'

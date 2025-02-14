@@ -19,7 +19,7 @@ class TicketListCreateView(ListCreateAPIView):
 
     def perform_create(self, serializer):
         ticket = TicketService.create_ticket(serializer.validated_data)
-        TicketService.change_ticket_status(ticket, 'ACTIVE')
+        TicketService.change_ticket_status(ticket, 'PENDING_PAYMENT')
 
 
 class TicketDetailView(RetrieveUpdateDestroyAPIView):
