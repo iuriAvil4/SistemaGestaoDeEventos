@@ -35,6 +35,10 @@ class TicketType(models.Model):
     sale_end = models.DateTimeField(null=False, blank=False)
     ticket_type_status = models.CharField(max_length=50, choices=StatusChoices.choices, default=StatusChoices.ACTIVE, null=False, blank=False)
 
+
+    class Meta:
+        db_table = 'ticket_types'
+
     def reserve_ticket(self):
         with transaction.atomic():
             self.refresh_from_db()  
@@ -53,7 +57,7 @@ class TicketType(models.Model):
     def clean(self):
         if self.sale_start > self.sale_end:
             raise ValidationError('The start date must be before the end date.')       
-        if self.quantity_available < 1:
+        if self.quantity_available < 0:
             raise ValidationError('The total capacity must be greater than zero.')
         if self.event.event_status != 'PUBLISHED':
             raise ValidationError('Tickets can only be created for published events.')
@@ -82,6 +86,9 @@ class Ticket(models.Model):
     used_at = models.DateTimeField(null=True, blank=True)
     price_paid = models.DecimalField(max_digits=10, decimal_places=2, null=False, blank=False)
 
+    class Meta:
+        db_table = 'tickets'
+
     def clean(self):
         if self.bought_at > self.used_at:
             raise ValidationError('The bought date must be before the used date')       
@@ -92,29 +99,23 @@ class Ticket(models.Model):
         self.clean()
         return super(Ticket, self).save(*args, **kwargs)
 
-    def generate_qr_response(self):     
-        qr_data = {
-            'ticket_code': self.unique_code,
-            'event': self.ticket_type.event.title,
-            'buyer': self.buyer.name,
-            'ticket_type': self.ticket_type.name,
-            'ticket_status': self.ticket_status,
-        }
-
+    def generate_qr_code(ticket):
+        qr_data = f"Ticket: {ticket.unique_code}\nEvent: {ticket.ticket_type.event.title}\nBuyer: {ticket.buyer.name}"
+        
         qr = qrcode.QRCode(
             version=1,
             error_correction=qrcode.constants.ERROR_CORRECT_L,
-            box_size=5,
+            box_size=10,
             border=4,
         )
-
-        qr.add_data(str(qr_data))
+        qr.add_data(qr_data)
         qr.make(fit=True)
 
-        img = qr.make_image(fill_color='black', back_color='white')
-        response = HttpResponse(content_type='image/png')
-        img.save(response, 'PNG')
-        
-        return response    
-        
+        img = qr.make_image(fill_color="black", back_color="white")
+
+        buffer = BytesIO()
+        img.save(buffer, format="PNG")
+        buffer.seek(0)
+
+        return buffer  
         

@@ -53,7 +53,7 @@ class TicketService:
 
     @staticmethod
     def pay_ticket(ticket: Ticket) -> Ticket:
-        ticket.change_ticket_status('ACTIVE')
+        TicketService.change_ticket_status(ticket, 'ACTIVE')
         ticket.payment_date = now() 
         ticket.save()
         return ticket

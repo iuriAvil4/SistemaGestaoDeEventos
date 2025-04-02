@@ -1,0 +1,75 @@
+name: sistema-gestao-eventos
+
+services:
+  app:
+    build: .
+    image: app-image
+    container_name: app-container
+    command: /app/entrypoint.sh
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/app
+    env_file:
+      - ./dotenv_files/.env
+    depends_on:
+      - postgres
+      - redis
+
+  postgres:
+    image: postgres
+    container_name: postgres-container
+    ports:
+      - "5434:5432"
+    environment:
+      POSTGRES_DB: postgres
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    restart: unless-stopped
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  redis:
+    image: "redis:alpine"
+    container_name: redis-container
+    restart: unless-stopped
+    ports: 
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+
+  celery:
+    image: app-image
+    container_name: celery-container
+    command: celery -A base worker -E -l info
+    volumes:
+      - .:/app
+    env_file:
+      - ./dotenv_files/.env
+    depends_on:
+      - postgres
+      - redis
+      - app
+
+  flower:
+    image: app-image
+    container_name: flower-container
+    command: celery -A base flower --basic_auth=admin:password123
+    ports:
+      - "5555:5555"
+    depends_on:
+      - redis
+
+  beat:
+    image: app-image
+    container_name: beat-container
+    command: celery -A base beat -l INFO --scheduler django_celery_beat.schedulers:DatabaseScheduler
+    volumes:
+      - .:/app
+    depends_on:
+      - redis
+      - app
+
+volumes:
+  postgres_data:
+  redis_data:

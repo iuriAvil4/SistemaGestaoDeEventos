@@ -25,6 +25,9 @@ class Event(models.Model):
     created_at = models.DateTimeField(editable=False)
     last_modified = models.DateTimeField()
 
+    class Meta:
+        db_table = 'events'
+
     def clean(self):
         if self.start_date > self.end_date:
             raise ValidationError('The start date must be before the end date')       
@@ -44,6 +47,9 @@ class Category(models.Model):
     class CategoryStatusChoices(models.TextChoices):
         ACTIVE = 'ACTIVE'
         INACTIVE = 'INACTIVE'
+
+    class Meta:
+        db_table = 'categories'
 
     name = models.CharField(max_length=255, null=False, blank=False)
     slug = models.SlugField(null=False, blank=False)

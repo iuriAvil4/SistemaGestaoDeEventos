@@ -14,8 +14,8 @@ class TicketRegisterSerializer(serializers.ModelSerializer):
         ticket_type = data.get('ticket_type')
         buyer = data.get('buyer')
 
-        if Ticket.objects.filter(ticket_type=ticket_type, buyer=buyer).exists():
-            raise serializers.ValidationError("O usuário já possui um ticket deste tipo para este evento.")
+        """ if Ticket.objects.filter(ticket_type=ticket_type, buyer=buyer).exists():
+            raise serializers.ValidationError("O usuário já possui um ticket deste tipo para este evento.") """
 
         if data['bought_at'] > data['used_at']:
             raise serializers.ValidationError("The bought date must be before the used date.")
@@ -34,7 +34,7 @@ class TicketTypeRegisterSerializer(serializers.ModelSerializer):
     def validate(self, data):
         if data['sale_start'] > data['sale_end']:
             raise serializers.ValidationError("The sale start date must be before the sale end date.")
-        if data['quantity_available'] < 1:
+        if data['quantity_available'] < 0:
             raise serializers.ValidationError("The quantity available must be greater than zero.")
         return data
 

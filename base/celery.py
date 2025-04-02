@@ -6,6 +6,8 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'base.settings')
 
 app = Celery('base')
 
+app.loader.override_backends['django-db'] = 'django_celery_results.backends.database:DatabaseBackend'
+
 # Lê configurações do Celery no settings.py
 app.config_from_object('django.conf:settings', namespace='CELERY')
 

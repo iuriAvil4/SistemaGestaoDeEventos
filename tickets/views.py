@@ -5,7 +5,7 @@ from rest_framework.views import APIView
 from core.permissions import IsAdminUser, IsOrganizerUser, IsParticipantUser
 from tickets.services.ticket_services import TicketService
 from tickets.services.ticket_type_services import TicketTypeService
-from tickets.services.email_services import send_payment_confirmation_email, send_reservation_confirmation_email
+from tickets.services.email_services import send_qrcode_email, send_reservation_confirmation_email
 from tickets.models import Ticket, TicketType
 from .serializer import TicketSerializer, TicketRegisterSerializer, TicketTypeRegisterSerializer
 from rest_framework import status
@@ -20,7 +20,7 @@ class TicketListCreateView(ListCreateAPIView):
 
     def perform_create(self, serializer):
         ticket = TicketService.create_ticket(serializer.validated_data)
-        send_reservation_confirmation_email(ticket.buyer.email, ticket.id)
+        send_reservation_confirmation_email(ticket.buyer.email, ticket.unique_code, ticket.price_paid)
         TicketService.change_ticket_status(ticket, 'PENDING_PAYMENT')
 
 
@@ -88,7 +88,8 @@ class PayTicketView(APIView):
         try:
             ticket = Ticket.objects.get(pk=ticket_id, buyer=request.user)
             TicketService.pay_ticket(ticket)
-            send_payment_confirmation_email(request.user.email, ticket.id)
+            qr_code_buffer = ticket.generate_qr_code()
+            send_qrcode_email(request.user.email, ticket.ticket_type.event.title, qr_code_buffer)
             return Response({"detail": "Ticket payment successful."}, status=status.HTTP_200_OK)
         except Ticket.DoesNotExist:
             return Response({"detail": "Ticket not found or unauthorized."}, status=status.HTTP_404_NOT_FOUND)

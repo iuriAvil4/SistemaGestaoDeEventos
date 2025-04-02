@@ -5,7 +5,12 @@ from .models import Event, Category
 class EventRegisterSerializer(serializers.ModelSerializer):
     organizer = serializers.PrimaryKeyRelatedField(read_only=True)
     slug = serializers.CharField(read_only=True)
-    
+    categories = serializers.PrimaryKeyRelatedField(
+        queryset=Category.objects.all(),
+        required=False,
+        many=True
+    )
+
     class Meta:
         model = Event
         fields = [

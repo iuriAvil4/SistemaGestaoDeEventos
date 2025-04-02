@@ -86,7 +86,7 @@ class CustomRefreshTokenView(TokenRefreshView):
 
 
 @api_view(['POST'])
-@permission_classes([IsAdminUser])
+@permission_classes([AllowAny])
 def register_user(request):
     """
     Register a new user. Admin-only access.

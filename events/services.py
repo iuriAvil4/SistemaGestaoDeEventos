@@ -16,8 +16,12 @@ class EventService:
     
     @staticmethod
     def create_event(validated_data, organizer) -> Event:
+        categories = validated_data.pop('categories', None)
         validated_data['organizer'] = organizer
-        return Event.objects.create(**validated_data)
+        event = Event.objects.create(**validated_data)     
+        if categories:
+            event.categories.set(categories)
+        return event
     
     @staticmethod
     def update_event(event, validated_data) -> Event:

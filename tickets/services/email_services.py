@@ -1,11 +1,12 @@
-from tasks import send_custom_email
+from tickets.tasks import send_custom_email
 
-def send_payment_confirmation_email(user_email, order_id):
-    subject = "Payment Confirmation"
-    message = f"Your payment for order {order_id} has been confirmed successfully."
-    send_custom_email.delay(subject, message, [user_email])
+def send_qrcode_email(user_email, event, qr_code_buffer):
+    subject = "Ticket QR Code"
+    message = f"Your ticket QR Code for {event} is attached."
+    attachments = [("ticket_qr.png", qr_code_buffer.getvalue(), "image/png")]
+    send_custom_email.delay(subject, message, [user_email], attachments=attachments)
 
-def send_reservation_confirmation_email(user_email, reservation_details):
+def send_reservation_confirmation_email(user_email, unique_code, price_paid):
     subject = "Reservation Confirmed"
-    message = f"Your reservation has been confirmed! Details: {reservation_details}"
+    message = f"Your reservation has been confirmed!\nTicket code: {unique_code}\nPrice paid: {price_paid}"
     send_custom_email.delay(subject, message, [user_email])

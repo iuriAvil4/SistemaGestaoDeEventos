@@ -10,34 +10,17 @@ from events.models import Event
 @api_view(['GET'])
 @permission_classes([IsAdminUser | IsOrganizerUser])
 def ticket_sales_report(request, event_id):
-    """
-    Endpoint para obter o relatório de vendas de tickets por tipo para um evento específico.
-    
-    Parâmetros:
-        - event_id: ID do evento para o qual o relatório será gerado.
-    
-    Retorno:
-        - JSON contendo a venda de tickets agrupada por tipo e as receitas geradas.
-    """
-    # Obtém o evento ou retorna 404 se não encontrado
     event = get_object_or_404(Event, pk=event_id)
-
-    # Verifica se há tipos de ticket associados ao evento
     ticket_types = TicketType.objects.filter(event=event)
-
-    # Lista para armazenar os dados do relatório
+    
     report_data = []
-
     for ticket_type in ticket_types:
-        # Obtém os tickets vendidos para este tipo
         tickets_sold = Ticket.objects.filter(ticket_type=ticket_type).exclude(ticket_status=Ticket.TicketStatusChoices.PENDING_PAYMENT).count()
-
-        # Calcula a receita gerada
+        
         revenue = Ticket.objects.filter(ticket_type=ticket_type).exclude(ticket_status=Ticket.TicketStatusChoices.PENDING_PAYMENT).aggregate(
             total_revenue=Sum('price_paid')
         )['total_revenue'] or 0.00
-
-        # Adiciona os dados ao relatório
+        
         report_data.append({
             'ticket_type_id': ticket_type.id,
             'ticket_type_name': ticket_type.name,
@@ -57,9 +40,14 @@ def ticket_sales_report(request, event_id):
 @permission_classes([IsAdminUser | IsOrganizerUser])
 def ticket_status_report(request, event_id):
     """
-    Relatório de contagem total de tickets por tipo de ticket para um evento.
+    Endpoint para obter um relatório de contagem total de tickets por tipo de ticket para um evento.
+    
+    Parâmetros:
+        - event_id (int): ID do evento.
+    
+    Retorno:
+        - JSON com a contagem total de tickets por tipo.
     """
-    # Obtém o evento ou retorna 404 se não encontrado
     event = get_object_or_404(Event, pk=event_id)
 
     # Agrupa os tickets por tipo de ticket e calcula o total
@@ -86,7 +74,15 @@ def ticket_status_report(request, event_id):
 @api_view(['GET'])
 @permission_classes([IsAdminUser | IsOrganizerUser])
 def event_attendance(request, event_id):
-
+    """
+    Endpoint para obter a taxa de participação em um evento com base nos tickets usados.
+    
+    Parâmetros:
+        - event_id (int): ID do evento.
+    
+    Retorno:
+        - JSON com o total de tickets emitidos, usados e a taxa de participação.
+    """
     event = get_object_or_404(Event, pk=event_id)
     # Contar o número total de tickets emitidos para o evento
     total_tickets = Ticket.objects.filter(ticket_type__event=event).count()
@@ -97,7 +93,6 @@ def event_attendance(request, event_id):
     # Calcula a taxa de participação (attendance rate)
     attendance_rate = (used_tickets / total_tickets * 100) if total_tickets > 0 else 0
 
-    # Retorna os dados do relatório em formato JSON
     return JsonResponse({
         'event_id': event.id,
         'event_name': event.title,
@@ -110,7 +105,10 @@ def event_attendance(request, event_id):
 @permission_classes([IsAdminUser | IsOrganizerUser])
 def ticket_type_list_for_published_events(request):
     """
-    Relatório de IDs e nomes dos tipos de tickets para eventos publicados.
+    Endpoint para obter uma lista de IDs e nomes dos tipos de tickets para eventos publicados.
+    
+    Retorno:
+        - JSON contendo uma lista de tipos de tickets disponíveis em eventos publicados.
     """
     ticket_types = TicketType.objects.filter(event__event_status='PUBLISHED').values_list('id', 'name')
 
@@ -121,7 +119,10 @@ def ticket_type_list_for_published_events(request):
 @permission_classes([IsAdminUser | IsOrganizerUser])
 def ticket_sales_detail(request):
     """
-    Relatório detalhado de tickets vendidos, incluindo comprador e tipo de ticket.
+    Endpoint para obter um relatório detalhado de tickets vendidos, incluindo comprador e tipo de ticket.
+    
+    Retorno:
+        - JSON contendo detalhes de cada ticket vendido.
     """
     tickets = Ticket.objects.select_related('buyer', 'ticket_type').filter(ticket_status='ACTIVE')
 
@@ -143,7 +144,10 @@ def ticket_sales_detail(request):
 @permission_classes([IsAdminUser | IsOrganizerUser])
 def events_with_ticket_types(request):
     """
-    Relatório de eventos com seus tipos de tickets.
+    Endpoint para obter um relatório de eventos com seus respectivos tipos de tickets.
+    
+    Retorno:
+        - JSON contendo os eventos e os tipos de tickets disponíveis para cada um.
     """
     events = Event.objects.prefetch_related('ticket_types')
 
